@@ -1,0 +1,243 @@
+{% load user_filters %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Dashboard</title>
+    <style>
+        /* Common Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #007bff;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        button, .btn {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            margin: 5px;
+            text-align: center;
+        }
+        button:hover, .btn:hover {
+            background-color: #0056b3;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 5px;
+            padding: 15px;
+            width: 22%;
+            min-width: 200px;
+            margin: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card h4 {
+            margin-top: 0;
+            color: #666;
+        }
+        .stat-card p {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .job-list {
+            list-style: none;
+            padding: 0;
+        }
+        .job-item {
+            background: white;
+            margin: 15px 0;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .job-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #666;
+        }
+        
+        /* Specific Styles */
+        .btn-success {
+            background-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .role-badge {
+            background-color: #17a2b8;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            margin-left: 5px;
+        }
+        .status-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .status-accepted {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-rejected {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome, {{ request.user.get_full_name|default:request.user.username }}</h1>
+        {% if hr_organizations %}
+            <p>
+                HR for: 
+                {% for org in hr_organizations %}
+                    <span class="role-badge">{{ org.organization.name }} ({{ org.get_role_display }})</span>
+                {% endfor %}
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="container">
+        <!-- Quick Stats -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <h4>Applications Sent</h4>
+                <p>{{ applications_count }}</p>
+            </div>
+            <div class="stat-card">
+                <h4>Interviews</h4>
+                <p>{{ interviews_count }}</p>
+            </div>
+            <div class="stat-card">
+                <h4>Active Jobs</h4>
+                <p>{{ job_postings.count }}</p>
+            </div>
+            {% if hr_organizations %}
+            <div class="stat-card">
+                <h4>HR Organizations</h4>
+                <p>{{ hr_organizations.count }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- HR Dashboard Link -->
+        {% if hr_organizations %}
+        <div class="nav-links">
+            <a href="{% url 'organization_dashboard' %}" class="btn btn-success">Go to HR Dashboard</a>
+        </div>
+        {% endif %}
+
+        <!-- Available Jobs -->
+        <h2>Available Job Postings</h2>
+        <ul class="job-list">
+            {% for job in job_postings %}
+            <li class="job-item">
+                {% if job.job_post_image %}
+                    <img class="job-image" width="300" src="{{ job.job_post_image.url }}" alt="{{ job.title }}">
+                {% endif %}
+                <h3>{{ job.title }}</h3>
+                <p><strong>Company:</strong> {{ job.organization.name }}</p>
+                <p><strong>Location:</strong> {{ job.location }}</p>
+                <p>{{ job.description|truncatewords:30 }}</p>
+                <p><strong>Qualifications:</strong> {{ job.required_qualifications|truncatewords:20 }}</p>
+                <p><strong>Deadline:</strong> {{ job.application_deadline|date:"M d, Y" }}</p>
+                
+                <div class="nav-links">
+                    {% if job.id in applied_jobs %}
+                        {% with status=applied_jobs|dictkey:job.id %}
+                        <span class="status-badge status-{{ status|lower }}">{{ status }}</span>
+                        <a href="{% url 'job_application_detail' job.pk %}" class="btn">View Application</a>
+                        {% endwith %}
+                    {% else %}
+                        <a href="{% url 'job_application_create' job.pk %}" class="btn">Apply Now</a>
+                    {% endif %}
+                    <a href="{% url 'job_posting_detail' job.pk %}" class="btn">View Details</a>
+                </div>
+            </li>
+            {% empty %}
+            <li class="job-item">
+                <p>No available job postings at the moment.</p>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <!-- Profile Management -->
+        <h2>Profile Management</h2>
+        <div class="nav-links">
+            <a href="{% url 'profile_view' %}" class="btn">View Profile</a>
+            <a href="{% url 'profile_image_update' %}" class="btn">Update Profile Image</a>
+            <a href="{% url 'banner_image_update' %}" class="btn">Update Banner Image</a>
+            <a href="{% url 'skills_select' %}" class="btn">Manage Skills</a>
+            <a href="{% url 'personal_details_update' %}" class="btn">Update Personal Details</a>
+            <a href="{% url 'user_job_applications' %}" class="btn">My Applications</a>
+            <a href="{% url 'notifications' %}" class="btn">Notifications ({{ unread_notifications }})</a>
+            <a href="{% url 'chat_home' %}" class="btn">Messages</a>
+            <a href="{% url 'user_logout' %}" class="btn">Logout</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; {% now "Y" %} User Dashboard. All rights reserved.</p>
+    </div>
+</body>
+</html>

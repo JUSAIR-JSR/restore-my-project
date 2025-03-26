@@ -1,0 +1,79 @@
+{% extends 'style.html' %}
+{% block content %}
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 90%;
+            width: 30rem;
+            margin: 0 1rem;
+        }
+        .container h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        form {
+            display: grid;
+            font-size: 1.3rem;
+        }
+        form label {
+            margin-top: 1rem;
+        }
+        form input {
+            height: 2rem;
+            border: none;
+            border-bottom: 4px dashed whitesmoke;
+            outline: none;
+            padding: 0.5rem;
+            font-size: 1rem;
+        }
+        form button {
+            height: 3rem;
+            margin-top: 2rem;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 0.5rem;
+            outline: none;
+            background: #5f37e0;
+            color: white;
+        }
+        .btn {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .btn a {
+            width: 48%;
+        }
+        .btn button {
+            font-size: 1rem;
+            border: none;
+            height: 2rem;
+            width: 100%;
+            border-radius: 0.5rem;
+            outline: none;
+        }
+    </style>
+    <div class="container">
+        <h2>Organization Login</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="organization_name">Organization Name:</label>
+            <input type="text" name="organization_name" id="organization_name">
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password">
+            <button type="submit">Login</button>
+        </form>
+        <div class="btn">
+            <a href="{% url 'index_dashboard' %}"><button>Back to Home</button></a>
+            <a href="{% url 'organization_register' %}"><button>Register</button></a>
+        </div>
+    </div>
+{% endblock content %}
