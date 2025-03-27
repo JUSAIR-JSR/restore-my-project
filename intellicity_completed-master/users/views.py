@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
+
+from organizations.models import OrganizationHR
 from .forms import ProfileImageForm, BannerImageForm, PersonalDetailsForm,SkillForm
 from .models import Profile, Skill
 from jobs.models import JobPosting  # Import JobPosting model
@@ -56,14 +58,19 @@ def user_dashboard(request):
     applied_jobs = {app.job.id: app.status for app in user_applications}
     interviews = Interview.objects.filter(job_application__applicant=user)
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
-
+    
+    # Add this line to get HR organizations
+    hr_organizations = OrganizationHR.objects.filter(user=request.user, is_active=True)
+    
     return render(request, 'users/user_dashboard.html', {
         'job_postings': job_postings,
         'applied_jobs': applied_jobs,
         'interviews': interviews,
-        'notifications': notifications
+        'notifications': notifications,
+        'hr_organizations': hr_organizations,  # Add this line
+        'applications_count': user_applications.count(),
+        'interviews_count': interviews.count(),
     })
-
 
 def user_logout(request):
     logout(request)

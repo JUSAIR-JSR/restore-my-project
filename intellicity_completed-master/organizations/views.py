@@ -37,13 +37,25 @@ def organization_dashboard(request):
     try:
         organization = request.user.organization
         is_owner = True
+        hr_role = None
+        hr_permissions = {
+            'can_post_jobs': True,
+            'can_manage_applications': True,
+            'can_schedule_interviews': True
+        }
     except Organization.DoesNotExist:
         # User is HR staff
-        hr_roles = OrganizationHR.objects.filter(user=request.user, is_active=True)
-        if not hr_roles.exists():
+        hr_role = OrganizationHR.objects.filter(user=request.user, is_active=True).first()
+        if not hr_role:
             return redirect('index_dashboard')
-        organization = hr_roles.first().organization
+            
+        organization = hr_role.organization
         is_owner = False
+        hr_permissions = {
+            'can_post_jobs': hr_role.can_post_jobs,
+            'can_manage_applications': hr_role.can_manage_applications,
+            'can_schedule_interviews': hr_role.can_schedule_interviews
+        }
     
     job_postings = JobPosting.objects.filter(organization=organization)
     job_applications = JobApplication.objects.filter(job__organization=organization)
@@ -55,13 +67,14 @@ def organization_dashboard(request):
         'job_applications': job_applications,
         'interviews': interviews,
         'is_owner': is_owner,
+        'hr_permissions': hr_permissions,
+        'hr_role': hr_role,
     }
     
     if is_owner:
         context['hr_staff'] = OrganizationHR.objects.filter(organization=organization)
     
     return render(request, 'organizations/organization_dashboard.html', context)
-
 
 
 from django.shortcuts import render, redirect, get_object_or_404

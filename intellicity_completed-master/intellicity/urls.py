@@ -13,6 +13,8 @@ urlpatterns = [
     path('chat/', include('chat.urls')),
     path('', views.index_dashboard, name='index_dashboard'),
     path('jobs/', include('jobs.urls')),
+    path("__reload__/", include("django_browser_reload.urls")),
+
 ]
 
 if settings.DEBUG:
